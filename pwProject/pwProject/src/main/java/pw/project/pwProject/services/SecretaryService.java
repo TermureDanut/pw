@@ -7,12 +7,13 @@ import jakarta.validation.ValidatorFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pw.project.pwProject.entities.Request;
 import pw.project.pwProject.entities.Secretary;
 import pw.project.pwProject.entities.dtos.SecretaryDto;
 import pw.project.pwProject.repositories.SecretaryRepository;
-//import pw.project.pwProject.security.PasswordEncryption;
+import pw.project.pwProject.repositories.StudentRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +24,11 @@ public class SecretaryService {
     @Autowired
     private SecretaryRepository secretaryRepository;
     @Autowired
+    private StudentRepository studentRepository;
+    @Autowired
     private RequestService requestService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private final Validator validator;
 
@@ -38,6 +43,10 @@ public class SecretaryService {
             return new ResponseEntity<>("Failed: email already exists", HttpStatus.BAD_REQUEST);
         }
 
+        if (studentRepository.existsByEmail(secretaryDto.getEmail())) {
+            return new ResponseEntity<>("Failed: email already exists", HttpStatus.BAD_REQUEST);
+        }
+
         if (secretaryDto.getFirstName() == null || secretaryDto.getLastName() == null || secretaryDto.getEmail() == null || secretaryDto.getPassword() == null) {
             return new ResponseEntity<>("Failed: missing necessary fields", HttpStatus.BAD_REQUEST);
         }
@@ -46,8 +55,7 @@ public class SecretaryService {
         newSecretary.setFirstName(secretaryDto.getFirstName());
         newSecretary.setLastName(secretaryDto.getLastName());
         newSecretary.setEmail(secretaryDto.getEmail());
-//        newSecretary.setPassword(PasswordEncryption.encrypt(secretary.getPassword()));
-        newSecretary.setPassword(secretaryDto.getPassword());
+        newSecretary.setPassword(passwordEncoder.encode(secretaryDto.getPassword()));
         newSecretary.setDeleted(false);
         newSecretary.setEstimatedHardDelete(LocalDateTime.now());
 
@@ -125,6 +133,17 @@ public class SecretaryService {
         foundSecretary.setDeleted(true);
         foundSecretary.setEstimatedHardDelete(estimatedHardDelete);
         secretaryRepository.save(foundSecretary);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(foundSecretary, HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> recover (Long id) {
+        Secretary foundSecretary = secretaryRepository.findById(id).orElse(null);
+        if (foundSecretary == null) {
+            return new ResponseEntity<>("Failed: secretary not found", HttpStatus.BAD_REQUEST);
+        }
+        foundSecretary.setDeleted(false);
+        foundSecretary.setEstimatedHardDelete(null);
+        secretaryRepository.save(foundSecretary);
+        return new ResponseEntity<>(foundSecretary, HttpStatus.OK);
     }
 }

@@ -23,6 +23,9 @@ public class Template {
     private String name;
 
     @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
     @Lob
     private byte[] content;
 

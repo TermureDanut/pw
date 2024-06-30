@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,28 +16,24 @@ import pw.project.pwProject.entities.dtos.RequestDto;
 import pw.project.pwProject.entities.dtos.StudentDto;
 import pw.project.pwProject.services.StudentService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/students/")
 public class StudentController {
     @Autowired
     private StudentService studentService;
 
-    @Operation(summary = "Create a new student", description = "Create a new student with all the required fields added.<br/>Constraints:<br/>1.First name and last name must have letters only.<br/>2.Email must be valid and unique.", tags = "Students")
-    @ApiResponse(responseCode = "201", description = "Student created successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Student.class)) })
-    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "text/plain"))
-    @PostMapping
-    @Deprecated
-    public ResponseEntity<?> post (@RequestBody StudentDto studentDto) {
-        return studentService.post(studentDto);
-    }
-
-    @Operation(summary = "Get all students", description = "If any students are available, returns a list of students.<br/>If no students are available then returns nothing.", tags = "Students")
+    @Operation(summary = "Get all students", description = "If any students are available, returns a list of students.<br/>If no students are available then returns nothing.", tags = "Students", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "Got all students", content = { @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Student.class))) })
     @ApiResponse(responseCode = "204", description = "No students found", content = @Content(mediaType = "text/plain"))
     @GetMapping
     public ResponseEntity<?> getAll () {
         return studentService.getAll();
+    }
+
+    @Operation(summary = "Get all requests of a student.", description = "Get all requests of a student by id", tags = "Students")
+    @GetMapping("requests/{id}")
+    public ResponseEntity<?> getAllRequestsByStudentId (@PathVariable("id") Long id) {
+        return studentService.getAllRequestsByStudentId(id);
     }
 
     @Operation(summary = "Update student fields", description = "Update student fields by filling only the needed fields.<br/>Constraints:<br/>1.First name and last name must have letters only.<br/>2.Email must be valid and unique.", tags = "Students")

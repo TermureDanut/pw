@@ -20,15 +20,6 @@ public class SecretaryController {
     @Autowired
     private SecretaryService secretaryService;
 
-    @PostMapping
-    @Operation(summary = "Create a new secretary", description = "Create a new secretary with all the required fields added.<br/>Constraints:<br/>1.First name and last name must have letters only.<br/>2.Email must be valid and unique.", tags = "Secretaries")
-    @ApiResponse(responseCode = "201", description = "Secretary created successfully", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = Secretary.class)) })
-    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "text/plain"))
-    @Deprecated
-    public ResponseEntity<?> post(@RequestBody SecretaryDto secretaryDto) {
-        return secretaryService.post(secretaryDto);
-    }
-
     @Operation(summary = "Get all uncompleted requests", description = "If any uncompleted requests are available, returns a list of uncompleted requests.<br/>If no uncompleted requests are available then returns nothing.", tags = "Secretaries")
     @ApiResponse(responseCode = "200", description = "Got all uncompleted requests", content = { @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Request.class))) })
     @ApiResponse(responseCode = "204", description = "No uncompleted requests found", content = @Content(mediaType = "text/plain"))

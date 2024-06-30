@@ -21,31 +21,31 @@ public class Student {
     @GeneratedValue
     private Long id;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     @Pattern(regexp = "^[a-zA-Z]+$")
     private String firstName;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     @Pattern(regexp = "^[a-zA-Z]+$")
     private String lastName;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(length = 500, nullable = false, unique = true)
     @Email
     private String email;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     private String password;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     private String faculty;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     private String studiesProgram;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     private String studiesType;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 500, nullable = false)
     private String specialization;
 
     @Column

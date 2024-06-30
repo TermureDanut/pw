@@ -31,7 +31,7 @@ public class TemplateService {
     @Autowired
     private TemplateKeyRepository templateKeyRepository;
 
-    public ResponseEntity<?> post(MultipartFile file) {
+    public ResponseEntity<?> post(MultipartFile file, String description) {
         if (templateRepository.existsByName(file.getOriginalFilename())) {
             return new ResponseEntity<>("Failed: name already exists", HttpStatus.BAD_REQUEST);
         }
@@ -44,6 +44,7 @@ public class TemplateService {
             template.setContent(file.getBytes());
             template.setDeleted(false);
             template.setEstimatedHardDelete(LocalDateTime.now());
+            template.setDescription(description);
             templateRepository.save(template);
 
             Set<String> extractedTexts = extractTextFromDocx(file.getInputStream());
@@ -66,7 +67,7 @@ public class TemplateService {
         XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
         String fileContent = extractor.getText();
 
-        Pattern pattern = Pattern.compile("\\$\\{(.*?)}");
+        Pattern pattern = Pattern.compile("\\{(.*?)}");
         Matcher matcher = pattern.matcher(fileContent);
 
         while (matcher.find()) {
@@ -91,6 +92,22 @@ public class TemplateService {
     public ResponseEntity<?> getAll () {
         List<Template> templates = templateRepository.findAllByDeleted(false);
         return templates.isEmpty() ? new ResponseEntity<>("No templates found", HttpStatus.NO_CONTENT) : new ResponseEntity<>(templates, HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> getAllDeleted () {
+        List<Template> templates = templateRepository.findAllByDeleted(true);
+        return templates.isEmpty() ? new ResponseEntity<>("No templates found", HttpStatus.NO_CONTENT) : new ResponseEntity<>(templates, HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> recover (Long id) {
+        Template template = templateRepository.findById(id).orElse(null);
+        if (template == null) {
+            return new ResponseEntity<>("Failed: template not found", HttpStatus.BAD_REQUEST);
+        }
+        template.setDeleted(false);
+        template.setEstimatedHardDelete(null);
+        templateRepository.save(template);
+        return new ResponseEntity<>(template, HttpStatus.OK);
     }
 
     public ResponseEntity<?> patch (Long id, MultipartFile file) {

@@ -18,10 +18,8 @@ import pw.project.pwProject.repositories.RequestRepository;
 import pw.project.pwProject.repositories.TemplateKeyRepository;
 
 import java.io.*;
-import java.util.Iterator;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 @Transactional
@@ -51,7 +49,7 @@ public class GenerationService {
                     String text = run.getText(0);
                     if (text != null) {
                         for (TemplateKey templateKey : templateKeys) {
-                            String placeholder = "${" + templateKey.getKey() + "}";
+                            String placeholder = "{" + templateKey.getKey() + "}";
                             if (text.contains(placeholder)) {
                                 text = text.replace(placeholder, getStudentPropertyValue(student, templateKey.getKey()));
                                 run.setText(text, 0);
@@ -66,6 +64,9 @@ public class GenerationService {
             byte[] modifiedContent = outputStream.toByteArray();
 
             String filename = String.format("%s_%s_%s", student.getFirstName(), student.getLastName(), template.getName());
+            request.setSolvedDate(LocalDateTime.now());
+            request.setCompleted(true);
+            requestRepository.save(request);
 
             return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"").body(modifiedContent);
         } catch (IOException e) {

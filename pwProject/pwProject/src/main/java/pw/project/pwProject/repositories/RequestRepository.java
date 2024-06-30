@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> getByCompleted (boolean completed);
+    List<Request> getByStudentId (long studentId);
 }

@@ -8,6 +8,8 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table
 @Getter
@@ -21,6 +23,12 @@ public class Request {
 
     @Column(nullable = false)
     private boolean completed;
+
+    @Column
+    private LocalDateTime madeDate;
+
+    @Column
+    private LocalDateTime solvedDate;
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "student_id", nullable = false)

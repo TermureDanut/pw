@@ -7,13 +7,16 @@ import jakarta.validation.ValidatorFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pw.project.pwProject.entities.Request;
 import pw.project.pwProject.entities.Student;
 import pw.project.pwProject.entities.Template;
 import pw.project.pwProject.entities.dtos.RequestDto;
 import pw.project.pwProject.entities.dtos.StudentDto;
 import pw.project.pwProject.repositories.RequestRepository;
+import pw.project.pwProject.repositories.SecretaryRepository;
 import pw.project.pwProject.repositories.StudentRepository;
 import pw.project.pwProject.repositories.TemplateRepository;
 
@@ -26,9 +29,13 @@ public class StudentService {
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
+    private SecretaryRepository secretaryRepository;
+    @Autowired
     private TemplateRepository templateRepository;
     @Autowired
     private RequestRepository requestRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     private final Validator validator;
 
     public StudentService () {
@@ -42,6 +49,10 @@ public class StudentService {
             return new ResponseEntity<>("Failed: email already exists", HttpStatus.BAD_REQUEST);
         }
 
+        if (secretaryRepository.existsByEmail(studentDto.getEmail())) {
+            return new ResponseEntity<>("Failed: email already exists", HttpStatus.BAD_REQUEST);
+        }
+
         if (studentDto.getFirstName() == null || studentDto.getLastName() == null || studentDto.getEmail() == null || studentDto.getPassword() == null
                 || studentDto.getFaculty() == null || studentDto.getStudiesProgram() == null || studentDto.getStudiesType() == null || studentDto.getSpecialization() == null) {
             return new ResponseEntity<>("Failed: missing necessary fields", HttpStatus.BAD_REQUEST);
@@ -51,8 +62,7 @@ public class StudentService {
         newStudent.setFirstName(studentDto.getFirstName());
         newStudent.setLastName(studentDto.getLastName());
         newStudent.setEmail(studentDto.getEmail());
-        //        newStudent.setPassword(PasswordEncryption.encrypt(secretary.getPassword()));
-        newStudent.setPassword(studentDto.getPassword());
+        newStudent.setPassword(passwordEncoder.encode(studentDto.getPassword()));
         newStudent.setFaculty(studentDto.getFaculty());
         newStudent.setStudiesProgram(studentDto.getStudiesProgram());
         newStudent.setStudiesType(studentDto.getStudiesType());
@@ -76,8 +86,14 @@ public class StudentService {
     }
 
     public ResponseEntity<?> getAll () {
-        List<Student> students = studentRepository.findAll();
+        List<Student> students = studentRepository.findAllByDeleted(false);
         return students.isEmpty() ? new ResponseEntity<>("No students found", HttpStatus.NO_CONTENT) : new ResponseEntity<>(students, HttpStatus.OK);
+    }
+
+    @Transactional
+    public ResponseEntity<?> getAllRequestsByStudentId (Long id) {
+        List<Request> requests = requestRepository.getByStudentId(id);
+        return requests.isEmpty() ? new ResponseEntity<>("No requests found", HttpStatus.NO_CONTENT) : new ResponseEntity<>(requests, HttpStatus.OK);
     }
 
     public ResponseEntity<?> patch (Long id, StudentDto studentDto) {
@@ -153,7 +169,18 @@ public class StudentService {
         foundStudent.setDeleted(true);
         foundStudent.setEstimatedHardDelete(estimatedHardDelete);
         studentRepository.save(foundStudent);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(foundStudent, HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> recover (Long id) {
+        Student foundStudent = studentRepository.findById(id).orElse(null);
+        if (foundStudent == null) {
+            return new ResponseEntity<>("Failed: student not found", HttpStatus.BAD_REQUEST);
+        }
+        foundStudent.setDeleted(false);
+        foundStudent.setEstimatedHardDelete(null);
+        studentRepository.save(foundStudent);
+        return new ResponseEntity<>(foundStudent, HttpStatus.OK);
     }
 
     public ResponseEntity<?> makeRequest (RequestDto requestDto) {
@@ -168,6 +195,7 @@ public class StudentService {
         request.setStudent(student);
         request.setTemplate(template);
         request.setCompleted(false);
+        request.setMadeDate(LocalDateTime.now());
 
         requestRepository.save(request);
         return new ResponseEntity<>(request, HttpStatus.OK);

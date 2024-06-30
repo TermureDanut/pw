@@ -5,4 +5,5 @@ import pw.project.pwProject.entities.Secretary;
 
 public interface SecretaryRepository extends JpaRepository<Secretary, Long> {
     boolean existsByEmail (String email);
+    Secretary findByEmail (String email);
 }

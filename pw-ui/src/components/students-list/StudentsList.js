@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import "./style.css";
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { DataGrid } from '@mui/x-data-grid';
+import config from "../../config";
 
 const columns = [
     {
@@ -48,9 +49,15 @@ const columns = [
 
 const StudentsList = () => {
     const [rows, setRows] = useState([]);
+    const storedData = JSON.parse(localStorage.getItem("userData"));
+    const token = storedData.accessToken;
 
     useEffect(() => {
-        fetch('http://localhost:8080/students/')
+        fetch(`${config.API_BASE_URL}students/`, {
+            headers: {
+                'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
+            }})
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch students');
@@ -80,11 +87,17 @@ const StudentsList = () => {
                 <DataGrid
                     rows={rows}
                     columns={columns}
-                    disableSelectionOnClick
+                    disableAutosize
                     disableColumnFilter
                     disableColumnMenu
-                    autoHeight
+                    disableColumnResize
+                    disableColumnSelector
                     disableColumnSorting
+                    disableDensitySelector
+                    disableEval
+                    disableMultipleRowSelection
+                    disableRowSelectionOnClick
+                    disableVirtualization
                 />
             </Box>
         </div>
